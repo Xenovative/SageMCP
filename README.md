@@ -259,6 +259,15 @@ This automatically:
 4. Builds the project
 5. Sets up and starts systemd service
 
+**Uninstall:**
+```powershell
+# Windows
+.\deploy\uninstall.ps1 -VpsHost "user@your-vps.com"
+
+# Linux/macOS (or directly on VPS)
+./deploy/uninstall.sh
+```
+
 See [deploy/README.md](deploy/README.md) for detailed options and troubleshooting.
 
 ---
