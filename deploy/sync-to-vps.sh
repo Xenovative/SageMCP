@@ -8,7 +8,7 @@ set -e
 VPS_HOST="${1:-}"
 VPS_PATH="${2:-/opt/sage-mcp}"
 SSH_KEY="${SSH_KEY:-}"
-INCLUDE_DB="${INCLUDE_DB:-false}"
+SKIP_DB="${SKIP_DB:-false}"
 RESTART="${RESTART:-false}"
 
 # Colors
@@ -23,7 +23,7 @@ if [ -z "$VPS_HOST" ]; then
     echo ""
     echo "Environment variables:"
     echo "  SSH_KEY=/path/to/key    - SSH private key"
-    echo "  INCLUDE_DB=true         - Include database in sync"
+    echo "  SKIP_DB=true            - Skip database sync (default: syncs DB)"
     echo "  RESTART=true            - Restart service after sync"
     exit 1
 fi
@@ -56,7 +56,7 @@ EXCLUDES=(
     --exclude='.env.local'
 )
 
-if [ "$INCLUDE_DB" != "true" ]; then
+if [ "$SKIP_DB" = "true" ]; then
     EXCLUDES+=(
         --exclude='data/sage.db'
         --exclude='data/sage.db-journal'
@@ -72,16 +72,23 @@ rsync -avz --progress \
     "$LOCAL_PATH/" \
     "${VPS_HOST}:${VPS_PATH}/src/"
 
-# Sync database if requested
-if [ "$INCLUDE_DB" = "true" ]; then
+# Sync database (default behavior, skip with SKIP_DB=true)
+if [ "$SKIP_DB" != "true" ]; then
     echo ""
     echo -e "${YELLOW}Syncing database...${NC}"
     
+    # Ensure data directory exists on VPS
+    ssh $SSH_OPTS "$VPS_HOST" "mkdir -p ${VPS_PATH}/data"
+    
     if [ -f "$LOCAL_PATH/data/sage.db" ]; then
         scp $SSH_OPTS "$LOCAL_PATH/data/sage.db" "${VPS_HOST}:${VPS_PATH}/data/"
+        echo -e "${GREEN}Database synced successfully${NC}"
     else
-        echo -e "${RED}Database not found at $LOCAL_PATH/data/sage.db${NC}"
+        echo -e "${YELLOW}Database not found at $LOCAL_PATH/data/sage.db - will seed on VPS${NC}"
     fi
+else
+    echo ""
+    echo -e "${YELLOW}Skipping database sync (SKIP_DB=true)${NC}"
 fi
 
 # Install and build on VPS

@@ -7,7 +7,7 @@ param(
     
     [string]$VpsPath = "/opt/sage-mcp",
     [string]$SshKey = "",
-    [switch]$IncludeDatabase,
+    [switch]$SkipDatabase,
     [switch]$Restart
 )
 
@@ -41,7 +41,7 @@ $Excludes = @(
     ".env.local"
 )
 
-if (-not $IncludeDatabase) {
+if ($SkipDatabase) {
     $Excludes += "data/sage.db"
     $Excludes += "data/sage.db-journal"
     $Excludes += "data/sage.db-wal"
@@ -94,20 +94,28 @@ if ($RsyncCmd) {
     Remove-Item $TempZip -ErrorAction SilentlyContinue
 }
 
-# Sync database if requested
-if ($IncludeDatabase) {
+# Sync database (default behavior, skip with -SkipDatabase)
+if (-not $SkipDatabase) {
     Write-Host ""
     Write-Host "Syncing database..." -ForegroundColor Yellow
+    
+    # Ensure data directory exists on VPS
+    ssh @SshArgs $VpsHost "mkdir -p ${VpsPath}/data"
     
     $DbPath = Join-Path $LocalPath "data\sage.db"
     if (Test-Path $DbPath) {
         $ScpArgs = @()
         if ($SshKey) { $ScpArgs += "-i", $SshKey }
+        $ScpArgs += "-o", "StrictHostKeyChecking=no"
         $ScpArgs += $DbPath, "${VpsHost}:${VpsPath}/data/"
         scp @ScpArgs
+        Write-Host "Database synced successfully" -ForegroundColor Green
     } else {
-        Write-Host "Database not found at $DbPath" -ForegroundColor Red
+        Write-Host "Database not found at $DbPath - will seed on VPS" -ForegroundColor Yellow
     }
+} else {
+    Write-Host ""
+    Write-Host "Skipping database sync (-SkipDatabase flag set)" -ForegroundColor Yellow
 }
 
 # Install dependencies and build on VPS
