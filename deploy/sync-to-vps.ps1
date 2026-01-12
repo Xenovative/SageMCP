@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$VpsHost,
     
-    [string]$VpsPath = "/opt/sage-mcp",
+    [string]$VpsPath = "~/sage-mcp",
     [string]$SshKey = "",
     [switch]$SkipDatabase,
     [switch]$Restart

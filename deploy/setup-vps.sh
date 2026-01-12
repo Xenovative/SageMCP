@@ -13,7 +13,7 @@ echo "=========================================="
 # Configuration
 APP_NAME="sage-mcp"
 APP_USER="sage"
-APP_DIR="/opt/sage-mcp"
+APP_DIR="$HOME/sage-mcp"
 NODE_VERSION="20"
 REPO_URL="${SAGE_REPO_URL:-}"  # Set this or copy files manually
 

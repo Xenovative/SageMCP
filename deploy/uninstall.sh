@@ -13,7 +13,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 APP_NAME="sage-mcp"
-APP_DIR="/opt/sage-mcp"
+APP_DIR="$HOME/sage-mcp"
 APP_USER="sage"
 
 echo -e "${CYAN}==========================================${NC}"

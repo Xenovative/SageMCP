@@ -25,7 +25,7 @@ if ($SshKey) {
 
 Write-Host "This will remove from ${VpsHost}:" -ForegroundColor Yellow
 Write-Host "  - Systemd service: sage-mcp.service"
-Write-Host "  - Application directory: /opt/sage-mcp"
+Write-Host "  - Application directory: ~/sage-mcp"
 if ($RemoveUser) {
     Write-Host "  - User: sage"
 }
@@ -59,14 +59,14 @@ echo "[INFO] Removing systemd service..."
 `$SUDO systemctl daemon-reload
 
 # Backup database
-if [ -f "/opt/sage-mcp/data/sage.db" ]; then
+if [ -f "`$HOME/sage-mcp/data/sage.db" ]; then
     BACKUP="/tmp/sage-mcp-backup-`$(date +%Y%m%d-%H%M%S).db"
     echo "[INFO] Backing up database to `$BACKUP..."
-    cp /opt/sage-mcp/data/sage.db "`$BACKUP"
+    cp `$HOME/sage-mcp/data/sage.db "`$BACKUP"
 fi
 
 echo "[INFO] Removing application directory..."
-`$SUDO rm -rf /opt/sage-mcp
+rm -rf `$HOME/sage-mcp
 
 if [ "$RemoveUserFlag" = "true" ]; then
     if id "sage" &>/dev/null; then

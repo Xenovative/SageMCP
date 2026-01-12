@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 VPS_HOST="${1:-}"
-VPS_PATH="${2:-/opt/sage-mcp}"
+VPS_PATH="${2:-~/sage-mcp}"
 SSH_KEY="${SSH_KEY:-}"
 SKIP_DB="${SKIP_DB:-false}"
 SETUP_ONLY="${SETUP_ONLY:-false}"
@@ -92,19 +92,10 @@ if ! command -v node &> /dev/null || [ "$(node -v | cut -d'v' -f2 | cut -d'.' -f
 fi
 echo "[INFO] Node.js $(node -v) ready"
 
-# Create sage user if doesn't exist
-if ! id "sage" &>/dev/null; then
-    echo "[INFO] Creating sage user..."
-    $SUDO useradd -r -m -s /bin/bash sage
-else
-    echo "[INFO] User sage exists"
-fi
-
-# Create directories
+# Create directories in home
 echo "[INFO] Creating directories..."
-$SUDO mkdir -p /opt/sage-mcp/src
-$SUDO mkdir -p /opt/sage-mcp/data
-$SUDO chown -R sage:sage /opt/sage-mcp
+mkdir -p ~/sage-mcp/src
+mkdir -p ~/sage-mcp/data
 
 echo "[INFO] VPS environment ready"
 SETUPEOF
@@ -181,9 +172,6 @@ if [ ! -f "${VPS_PATH}/data/sage.db" ]; then
     SAGE_DB_PATH="${VPS_PATH}/data/sage.db" npm run seed 2>&1 | tail -5
 fi
 
-# Fix permissions
-sudo chown -R sage:sage ${VPS_PATH} 2>/dev/null || true
-
 echo "[INFO] Build complete"
 BUILDEOF
 
@@ -201,31 +189,28 @@ if [ "\$EUID" -ne 0 ]; then
     SUDO="sudo"
 fi
 
+# Get actual home path (expand ~)
+SAGE_HOME=\$(eval echo ${VPS_PATH})
+
 # Create systemd service file
-\$SUDO tee /etc/systemd/system/sage-mcp.service > /dev/null << 'UNITEOF'
+\$SUDO tee /etc/systemd/system/sage-mcp.service > /dev/null << UNITEOF
 [Unit]
 Description=Sage MCP Academic Research Server
 After=network.target
 
 [Service]
 Type=simple
-User=sage
-Group=sage
-WorkingDirectory=${VPS_PATH}/src
+User=\$USER
+Group=\$USER
+WorkingDirectory=\$SAGE_HOME/src
 Environment=NODE_ENV=production
-Environment=SAGE_DB_PATH=${VPS_PATH}/data/sage.db
-ExecStart=/usr/bin/node ${VPS_PATH}/src/dist/index.js
+Environment=SAGE_DB_PATH=\$SAGE_HOME/data/sage.db
+ExecStart=/usr/bin/node \$SAGE_HOME/src/dist/index.js
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=sage-mcp
-
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=${VPS_PATH}/data
-PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

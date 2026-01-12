@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$VpsHost,
     
-    [string]$VpsPath = "/opt/sage-mcp",
+    [string]$VpsPath = "~/sage-mcp",
     [string]$SshKey = "",
     [switch]$SkipDatabase,
     [switch]$SetupOnly,
@@ -87,9 +87,8 @@ fi
 
 # Create directories
 echo "[INFO] Creating directories..."
-$SUDO mkdir -p /opt/sage-mcp/src
-$SUDO mkdir -p /opt/sage-mcp/data
-$SUDO chown -R sage:sage /opt/sage-mcp
+mkdir -p ~/sage-mcp/src
+mkdir -p ~/sage-mcp/data
 
 echo "[INFO] VPS environment ready"
 '@
@@ -211,9 +210,6 @@ if [ ! -f "${VpsPath}/data/sage.db" ]; then
     SAGE_DB_PATH="${VpsPath}/data/sage.db" npm run seed 2>&1 | tail -5
 fi
 
-# Fix permissions
-sudo chown -R sage:sage ${VpsPath} 2>/dev/null || true
-
 echo "[INFO] Build complete"
 "@
 
@@ -233,31 +229,28 @@ if [ "`$EUID" -ne 0 ]; then
     SUDO="sudo"
 fi
 
+# Get actual home path (expand ~)
+SAGE_HOME=`$(eval echo ${VpsPath})
+
 # Create systemd service file
-`$SUDO tee /etc/systemd/system/sage-mcp.service > /dev/null << 'SERVICEEOF'
+`$SUDO tee /etc/systemd/system/sage-mcp.service > /dev/null << SERVICEEOF
 [Unit]
 Description=Sage MCP Academic Research Server
 After=network.target
 
 [Service]
 Type=simple
-User=sage
-Group=sage
-WorkingDirectory=${VpsPath}/src
+User=`$USER
+Group=`$USER
+WorkingDirectory=`$SAGE_HOME/src
 Environment=NODE_ENV=production
-Environment=SAGE_DB_PATH=${VpsPath}/data/sage.db
-ExecStart=/usr/bin/node ${VpsPath}/src/dist/index.js
+Environment=SAGE_DB_PATH=`$SAGE_HOME/data/sage.db
+ExecStart=/usr/bin/node `$SAGE_HOME/src/dist/index.js
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=sage-mcp
-
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=${VpsPath}/data
-PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target

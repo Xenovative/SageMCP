@@ -6,7 +6,7 @@ set -e
 
 # Configuration
 VPS_HOST="${1:-}"
-VPS_PATH="${2:-/opt/sage-mcp}"
+VPS_PATH="${2:-~/sage-mcp}"
 SSH_KEY="${SSH_KEY:-}"
 SKIP_DB="${SKIP_DB:-false}"
 RESTART="${RESTART:-false}"
