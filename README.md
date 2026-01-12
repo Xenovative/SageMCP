@@ -242,14 +242,24 @@ Papers are stored in SQLite with full-text search indexing:
 
 ## VPS Deployment
 
-See `deploy/` directory for deployment scripts:
+Single command deploys everything (from your local machine):
 
-```bash
-# On your VPS (Ubuntu/Debian)
-./deploy/setup-vps.sh
+```powershell
+# Windows PowerShell
+.\deploy\deploy.ps1 -VpsHost "user@your-vps.com"
+
+# Linux/macOS
+./deploy/deploy.sh user@your-vps.com
 ```
 
-See [deploy/README.md](deploy/README.md) for detailed VPS deployment instructions.
+This automatically:
+1. Installs Node.js and dependencies on VPS
+2. Creates `sage` user and directories
+3. Copies source files and database
+4. Builds the project
+5. Sets up and starts systemd service
+
+See [deploy/README.md](deploy/README.md) for detailed options and troubleshooting.
 
 ---
 
